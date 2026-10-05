@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${isEdit} ? 'Chỉnh Sửa Sách' : 'Thêm Sách Mới')}"></head>
+<body>
+
+<nav th:replace="~{fragments/layout :: navbar('books')}"></nav>
+<div th:replace="~{fragments/layout :: alerts}"></div>
+
+<div class="container main-container" style="max-width: 800px;">
+    <div class="card">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0 text-primary">
+                <i th:class="${isEdit} ? 'bi bi-pencil-square me-2' : 'bi bi-journal-plus me-2'"></i>
+                <span th:text="${isEdit} ? 'Chỉnh Sửa Sách' : 'Thêm Sách Mới'"></span>
+            </h5>
+        </div>
+        <div class="card-body p-4">
+            <form th:action="${isEdit} ? @{/books/{id}(id=${bookId})} : @{/books}"
+                  th:object="${bookForm}"
+                  method="post">
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="isbn" class="form-label fw-semibold">Mã ISBN <span class="text-danger">*</span></label>
+                        <input type="text"
+                               id="isbn"
+                               th:field="*{isbn}"
+                               class="form-control"
+                               th:classappend="${#fields.hasErrors('isbn')} ? 'is-invalid' : ''"
+                               placeholder="VD: 978-0132350884">
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('isbn')}" th:errors="*{isbn}"></div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="categoryId" class="form-label fw-semibold">Thể Loại <span class="text-danger">*</span></label>
+                        <select id="categoryId"
+                                th:field="*{categoryId}"
+                                class="form-select"
+                                th:classappend="${#fields.hasErrors('categoryId')} ? 'is-invalid' : ''">
+                            <option value="">-- Chọn thể loại --</option>
+                            <option th:each="cat : ${categories}"
+                                    th:value="${cat.id}"
+                                    th:text="${cat.name}">
+                            </option>
+                        </select>
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('categoryId')}" th:errors="*{categoryId}"></div>
+                    </div>
+
+                    <div class="col-12">
+                        <label for="title" class="form-label fw-semibold">Tên Sách <span class="text-danger">*</span></label>
+                        <input type="text"
+                               id="title"
+                               th:field="*{title}"
+                               class="form-control"
+                               th:classappend="${#fields.hasErrors('title')} ? 'is-invalid' : ''"
+                               placeholder="VD: Clean Code: A Handbook of Agile Software Craftsmanship">
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></div>
+                    </div>
+
+                    <div class="col-12">
+                        <label for="author" class="form-label fw-semibold">Tác Giả <span class="text-danger">*</span></label>
+                        <input type="text"
+                               id="author"
+                               th:field="*{author}"
+                               class="form-control"
+                               th:classappend="${#fields.hasErrors('author')} ? 'is-invalid' : ''"
+                               placeholder="VD: Robert C. Martin">
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('author')}" th:errors="*{author}"></div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="totalQuantity" class="form-label fw-semibold">Tổng Số Lượng <span class="text-danger">*</span></label>
+                        <input type="number"
+                               id="totalQuantity"
+                               th:field="*{totalQuantity}"
+                               class="form-control"
+                               min="1"
+                               th:classappend="${#fields.hasErrors('totalQuantity')} ? 'is-invalid' : ''">
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('totalQuantity')}" th:errors="*{totalQuantity}"></div>
+                        <small th:if="${isEdit}" class="text-muted">
+                            Số lượng sẵn có hiện tại: <span class="fw-bold" th:text="${bookForm.availableQuantity}"></span>
+                        </small>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="status" class="form-label fw-semibold">Trạng Thái <span class="text-danger">*</span></label>
+                        <select id="status" th:field="*{status}" class="form-select">
+                            <option th:each="st : ${statuses}"
+                                    th:value="${st}"
+                                    th:text="${st}">
+                            </option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 mt-4">
+                    <a th:href="@{/books}" class="btn btn-outline-secondary">Hủy bỏ</a>
+                    <button type="submit" class="btn btn-primary px-4">
+                        <i class="bi bi-save me-1"></i> Lưu thông tin
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

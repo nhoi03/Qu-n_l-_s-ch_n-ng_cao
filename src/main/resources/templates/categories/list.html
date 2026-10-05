@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Quản Lý Thể Loại')}"></head>
+<body>
+
+<nav th:replace="~{fragments/layout :: navbar('categories')}"></nav>
+<div th:replace="~{fragments/layout :: alerts}"></div>
+
+<div class="container main-container">
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="card-title mb-0"><i class="bi bi-tags me-2"></i>Danh Sách Thể Loại Sách</h4>
+                <a th:href="@{/categories/new}" class="btn btn-primary">
+                    <i class="bi bi-plus-lg me-1"></i>Thêm Thể Loại
+                </a>
+            </div>
+
+            <!-- Filter form -->
+            <form th:action="@{/categories}" method="get" class="row g-2 mb-3">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" name="keyword" th:value="${keyword}" class="form-control" placeholder="Tìm theo tên hoặc mô tả thể loại...">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select name="active" class="form-select">
+                        <option value="" th:selected="${active == null}">-- Tất cả trạng thái --</option>
+                        <option value="true" th:selected="${active != null and active == true}">Đang hoạt động</option>
+                        <option value="false" th:selected="${active != null and active == false}">Ngừng hoạt động</option>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex gap-2">
+                    <button type="submit" class="btn btn-secondary w-50"><i class="bi bi-funnel me-1"></i>Lọc</button>
+                    <a th:href="@{/categories}" class="btn btn-outline-secondary w-50">Đặt lại</a>
+                </div>
+            </form>
+
+            <!-- Table -->
+            <div class="table-responsive">
+                <table class="table table-hover align-middle table-bordered">
+                    <thead>
+                        <tr>
+                            <th style="width: 70px;">ID</th>
+                            <th>Tên Thể Loại</th>
+                            <th>Mô Tả</th>
+                            <th style="width: 150px;" class="text-center">Trạng Thái</th>
+                            <th style="width: 180px;" class="text-center">Thao Tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:if="${#lists.isEmpty(categories)}">
+                            <td colspan="5" class="text-center text-muted py-4">Không tìm thấy thể loại nào.</td>
+                        </tr>
+                        <tr th:each="category : ${categories}">
+                            <td class="fw-bold" th:text="${category.id}"></td>
+                            <td class="fw-semibold text-primary" th:text="${category.name}"></td>
+                            <td th:text="${category.description != null ? category.description : '-'}"></td>
+                            <td class="text-center">
+                                <span th:if="${category.active}" class="badge bg-success">Đang hoạt động</span>
+                                <span th:unless="${category.active}" class="badge bg-secondary">Ngừng hoạt động</span>
+                            </td>
+                            <td class="text-center">
+                                <div class="btn-group btn-group-sm">
+                                    <a th:href="@{/categories/{id}/edit(id=${category.id})}" class="btn btn-outline-primary" title="Chỉnh sửa">
+                                        <i class="bi bi-pencil"></i> Sửa
+                                    </a>
+                                    <form th:if="${category.active}" th:action="@{/categories/{id}/delete(id=${category.id})}" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn vô hiệu hóa thể loại này?');">
+                                        <button type="submit" class="btn btn-outline-danger" title="Vô hiệu hóa">
+                                            <i class="bi bi-slash-circle"></i> Tắt
+                                        </button>
+                                    </form>
+                                    <form th:unless="${category.active}" th:action="@{/categories/{id}/restore(id=${category.id})}" method="post" class="d-inline">
+                                        <button type="submit" class="btn btn-outline-success" title="Kích hoạt lại">
+                                            <i class="bi bi-check2-circle"></i> Mở
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div th:replace="~{fragments/pagination :: pagination('/categories', ${totalPages}, ${currentPage}, ${size})}"></div>
+        </div>
+    </div>
+</div>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

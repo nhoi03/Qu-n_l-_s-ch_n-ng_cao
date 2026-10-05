@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Tổng Quan Thư Viện')}"></head>
+<body>
+
+<nav th:replace="~{fragments/layout :: navbar('reports')}"></nav>
+<div th:replace="~{fragments/layout :: alerts}"></div>
+
+<div class="container main-container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold mb-0">Hệ Thống Quản Lý Mượn Trả Sách Thư Viện</h3>
+            <p class="text-muted mb-0">Thống kê dữ liệu, tình trạng mượn trả và cảnh báo quá hạn thời gian thực.</p>
+        </div>
+        <div>
+            <a th:href="@{/borrowings/new}" class="btn btn-primary fw-bold shadow-sm">
+                <i class="bi bi-plus-circle me-1"></i> Tạo Phiếu Mượn Mới
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3 col-sm-6">
+            <div class="card bg-primary text-white h-100">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="small text-white-50 text-uppercase fw-bold">Tổng Đầu Sách</div>
+                        <div class="fs-3 fw-bold" th:text="${stats.totalBooks}">0</div>
+                    </div>
+                    <i class="bi bi-journal-bookmark fs-1 text-white-50"></i>
+                </div>
+                <div class="card-footer bg-transparent border-0 pt-0 text-white-50 small">
+                    <span th:text="${stats.totalCategories}"></span> thể loại sách
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 col-sm-6">
+            <div class="card bg-success text-white h-100">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="small text-white-50 text-uppercase fw-bold">Thành Viên Hoạt Động</div>
+                        <div class="fs-3 fw-bold" th:text="${stats.activeMembers}">0</div>
+                    </div>
+                    <i class="bi bi-people fs-1 text-white-50"></i>
+                </div>
+                <div class="card-footer bg-transparent border-0 pt-0 text-white-50 small">
+                    Tổng số: <span th:text="${stats.totalMembers}"></span> thành viên
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 col-sm-6">
+            <div class="card bg-info text-dark h-100">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="small text-dark-50 text-uppercase fw-bold">Phiếu Đang Mượn</div>
+                        <div class="fs-3 fw-bold" th:text="${stats.activeBorrowingsCount}">0</div>
+                    </div>
+                    <i class="bi bi-arrow-left-right fs-1 text-dark-50"></i>
+                </div>
+                <div class="card-footer bg-transparent border-0 pt-0 text-dark-50 small">
+                    <a th:href="@{/borrowings(status='BORROWED')}" class="text-dark text-decoration-none">Xem danh sách →</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 col-sm-6">
+            <div class="card bg-danger text-white h-100">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="small text-white-50 text-uppercase fw-bold">Phiếu Quá Hạn</div>
+                        <div class="fs-3 fw-bold" th:text="${stats.overdueBorrowingsCount}">0</div>
+                    </div>
+                    <i class="bi bi-exclamation-octagon fs-1 text-white-50"></i>
+                </div>
+                <div class="card-footer bg-transparent border-0 pt-0 text-white-50 small">
+                    <a th:href="@{/reports/overdue}" class="text-white text-decoration-none fw-bold">Xem báo cáo quá hạn →</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Report Sections -->
+    <div class="row g-4 mb-4">
+        <!-- Top 5 Books -->
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 text-primary">
+                        <i class="bi bi-trophy me-2 text-warning"></i>Top 5 Sách Mượn Nhiều Nhất
+                    </h5>
+                    <a th:href="@{/reports/top-books}" class="btn btn-outline-primary btn-sm">Xem tất cả</a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 50px;">Hạng</th>
+                                    <th>Tên Sách & Tác Giả</th>
+                                    <th style="width: 120px;" class="text-center">Lượt Mượn</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:if="${#lists.isEmpty(topBooks)}">
+                                    <td colspan="3" class="text-center text-muted py-3">Chưa có dữ liệu mượn sách.</td>
+                                </tr>
+                                <tr th:each="book, stat : ${topBooks}">
+                                    <td class="text-center fw-bold">
+                                        <span class="badge rounded-pill"
+                                              th:classappend="${stat.count == 1 ? 'bg-warning text-dark' : (stat.count == 2 ? 'bg-secondary' : (stat.count == 3 ? 'bg-danger' : 'bg-light text-dark border'))}"
+                                              th:text="${stat.count}">
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="fw-semibold text-primary" th:text="${book.title}"></div>
+                                        <small class="text-muted" th:text="${book.author} + ' | ISBN: ' + ${book.isbn}"></small>
+                                    </td>
+                                    <td class="text-center fw-bold fs-6 text-success" th:text="${book.totalBorrowed} + ' cuốn'"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Overdue Borrowings -->
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 text-danger">
+                        <i class="bi bi-clock-history me-2"></i>Phiếu Mượn Quá Hạn Cần Xử Lý
+                    </h5>
+                    <a th:href="@{/reports/overdue}" class="btn btn-outline-danger btn-sm">Xem đầy đủ</a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 60px;">Mã</th>
+                                    <th>Người Mượn</th>
+                                    <th style="width: 110px;">Hạn Trả</th>
+                                    <th style="width: 100px;" class="text-center">Thao Tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:if="${#lists.isEmpty(overdueBorrowings)}">
+                                    <td colspan="4" class="text-center text-muted py-3">Tuyệt vời! Hiện không có phiếu mượn nào quá hạn.</td>
+                                </tr>
+                                <tr th:each="ob : ${overdueBorrowings}">
+                                    <td class="fw-bold" th:text="'#' + ${ob.id}"></td>
+                                    <td>
+                                        <div class="fw-semibold" th:text="${ob.member.fullName}"></div>
+                                        <small class="text-muted" th:text="${ob.member.email}"></small>
+                                    </td>
+                                    <td class="text-danger fw-semibold" th:text="${#temporals.format(ob.dueDate, 'dd/MM/yyyy')}"></td>
+                                    <td class="text-center">
+                                        <a th:href="@{/borrowings/{id}/return(id=${ob.id})}" class="btn btn-sm btn-outline-danger">
+                                            Trả sách
+                                        </a>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick navigation report shortcuts -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card text-center p-3">
+                <h6 class="fw-bold mb-2"><i class="bi bi-clock-history me-1 text-danger"></i> Báo Cáo Quá Hạn</h6>
+                <p class="text-muted small mb-3">Xem danh sách các phiếu mượn chưa trả hết quá hạn.</p>
+                <a th:href="@{/reports/overdue}" class="btn btn-outline-danger btn-sm">Xem chi tiết</a>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center p-3">
+                <h6 class="fw-bold mb-2"><i class="bi bi-trophy me-1 text-warning"></i> Top 5 Sách Mượn Nhiều</h6>
+                <p class="text-muted small mb-3">Xếp hạng sách được độc giả mượn nhiều nhất.</p>
+                <a th:href="@{/reports/top-books}" class="btn btn-outline-primary btn-sm">Xem chi tiết</a>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center p-3">
+                <h6 class="fw-bold mb-2"><i class="bi bi-person-lines-fill me-1 text-success"></i> Thống Kê Theo Thành Viên</h6>
+                <p class="text-muted small mb-3">Số lượng phiếu và tổng số sách mượn theo từng thành viên.</p>
+                <a th:href="@{/reports/member-stats}" class="btn btn-outline-success btn-sm">Xem chi tiết</a>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

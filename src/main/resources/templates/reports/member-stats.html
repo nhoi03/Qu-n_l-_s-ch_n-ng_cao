@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Thống Kê Mượn Sách Theo Thành Viên')}"></head>
+<body>
+
+<nav th:replace="~{fragments/layout :: navbar('reports')}"></nav>
+<div th:replace="~{fragments/layout :: alerts}"></div>
+
+<div class="container main-container">
+    <div class="card mb-4">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 text-success">
+                <i class="bi bi-person-lines-fill me-2"></i>Thống Kê Số Lượt Mượn Theo Thành Viên
+            </h5>
+            <a th:href="@{/reports}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left me-1"></i> Quay lại Tổng quan
+            </a>
+        </div>
+        <div class="card-body">
+            <p class="text-muted mb-4">
+                Báo cáo tổng hợp số lần tạo phiếu mượn và tổng số lượng sách mà mỗi thành viên đã mượn trong hệ thống.
+            </p>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle table-bordered">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 70px;">ID</th>
+                            <th>Họ và Tên Thành Viên</th>
+                            <th>Email</th>
+                            <th style="width: 180px;" class="text-center">Tổng Số Phiếu Mượn</th>
+                            <th style="width: 180px;" class="text-center">Tổng Số Sách Đã Mượn</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:if="${#lists.isEmpty(memberStats)}">
+                            <td colspan="5" class="text-center text-muted py-4">Chưa có dữ liệu thành viên.</td>
+                        </tr>
+                        <tr th:each="m : ${memberStats}">
+                            <td class="fw-bold" th:text="${m.memberId}"></td>
+                            <td class="fw-semibold text-primary" th:text="${m.fullName}"></td>
+                            <td th:text="${m.email}"></td>
+                            <td class="text-center fw-bold fs-6">
+                                <span class="badge bg-primary" th:text="${m.totalBorrowings} + ' phiếu'"></span>
+                            </td>
+                            <td class="text-center fw-bold fs-6">
+                                <span class="badge bg-success" th:text="${m.totalBooksBorrowed} + ' cuốn'"></span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div th:replace="~{fragments/pagination :: pagination('/reports/member-stats', ${totalPages}, ${currentPage}, ${size})}"></div>
+        </div>
+    </div>
+</div>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

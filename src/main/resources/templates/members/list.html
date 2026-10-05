@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Quản Lý Thành Viên')}"></head>
+<body>
+
+<nav th:replace="~{fragments/layout :: navbar('members')}"></nav>
+<div th:replace="~{fragments/layout :: alerts}"></div>
+
+<div class="container main-container">
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="card-title mb-0"><i class="bi bi-people me-2"></i>Danh Sách Thành Viên Thư Viện</h4>
+                <a th:href="@{/members/new}" class="btn btn-primary">
+                    <i class="bi bi-person-plus me-1"></i>Thêm Thành Viên
+                </a>
+            </div>
+
+            <!-- Filter form -->
+            <form th:action="@{/members}" method="get" class="row g-2 mb-3">
+                <div class="col-md-5">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" name="keyword" th:value="${keyword}" class="form-control" placeholder="Tìm theo tên, email, số điện thoại...">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select name="status" class="form-select">
+                        <option value="">-- Tất cả trạng thái --</option>
+                        <option th:each="st : ${statuses}"
+                                th:value="${st}"
+                                th:text="${st.name() == 'ACTIVE' ? 'Đang hoạt động (ACTIVE)' : 'Đang bị khóa (BLOCKED)'}"
+                                th:selected="${status != null and status == st}">
+                        </option>
+                    </select>
+                </div>
+                <div class="col-md-4 d-flex gap-2">
+                    <button type="submit" class="btn btn-secondary w-50"><i class="bi bi-funnel me-1"></i>Lọc</button>
+                    <a th:href="@{/members}" class="btn btn-outline-secondary w-50">Đặt lại</a>
+                </div>
+            </form>
+
+            <!-- Table -->
+            <div class="table-responsive">
+                <table class="table table-hover align-middle table-bordered">
+                    <thead>
+                        <tr>
+                            <th style="width: 70px;">ID</th>
+                            <th>Họ và Tên</th>
+                            <th>Email</th>
+                            <th>Số Điện Thoại</th>
+                            <th style="width: 150px;">Ngày Đăng Ký</th>
+                            <th style="width: 140px;" class="text-center">Trạng Thái</th>
+                            <th style="width: 180px;" class="text-center">Thao Tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:if="${#lists.isEmpty(members)}">
+                            <td colspan="7" class="text-center text-muted py-4">Không tìm thấy thành viên nào.</td>
+                        </tr>
+                        <tr th:each="member : ${members}">
+                            <td class="fw-bold" th:text="${member.id}"></td>
+                            <td class="fw-semibold text-primary" th:text="${member.fullName}"></td>
+                            <td th:text="${member.email}"></td>
+                            <td th:text="${member.phone != null ? member.phone : '-'}"></td>
+                            <td th:text="${#temporals.format(member.createdAt, 'dd/MM/yyyy HH:mm')}"></td>
+                            <td class="text-center">
+                                <span th:if="${member.status.name() == 'ACTIVE'}" class="badge bg-success">
+                                    <i class="bi bi-check-circle me-1"></i>ACTIVE
+                                </span>
+                                <span th:if="${member.status.name() == 'BLOCKED'}" class="badge bg-danger">
+                                    <i class="bi bi-lock me-1"></i>BLOCKED
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <div class="btn-group btn-group-sm">
+                                    <a th:href="@{/members/{id}/edit(id=${member.id})}" class="btn btn-outline-primary" title="Sửa">
+                                        <i class="bi bi-pencil"></i> Sửa
+                                    </a>
+                                    <form th:action="@{/members/{id}/toggle-status(id=${member.id})}" method="post" class="d-inline"
+                                          th:onsubmit="${member.status.name() == 'ACTIVE'} ? 'return confirm(\'Bạn có chắc chắn muốn KHÓA thành viên này?\');' : 'return confirm(\'Bạn có chắc chắn muốn MỞ KHÓA thành viên này?\');'">
+                                        <button th:if="${member.status.name() == 'ACTIVE'}" type="submit" class="btn btn-outline-danger" title="Khóa tài khoản">
+                                            <i class="bi bi-lock"></i> Khóa
+                                        </button>
+                                        <button th:if="${member.status.name() == 'BLOCKED'}" type="submit" class="btn btn-outline-success" title="Mở khóa tài khoản">
+                                            <i class="bi bi-unlock"></i> Mở
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div th:replace="~{fragments/pagination :: pagination('/members', ${totalPages}, ${currentPage}, ${size})}"></div>
+        </div>
+    </div>
+</div>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

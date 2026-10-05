@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Chi Tiết Phiếu Mượn #' + ${borrowing.id})}"></head>
+<body>
+
+<nav th:replace="~{fragments/layout :: navbar('borrowings')}"></nav>
+<div th:replace="~{fragments/layout :: alerts}"></div>
+
+<div class="container main-container">
+    <div class="card mb-4">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 text-primary">
+                <i class="bi bi-file-earmark-text me-2"></i>Chi Tiết Phiếu Mượn #<span th:text="${borrowing.id}"></span>
+            </h5>
+            <div>
+                <a th:href="@{/borrowings}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-left me-1"></i> Quay lại
+                </a>
+                <a th:if="${borrowing.status.name() == 'BORROWED'}"
+                   th:href="@{/borrowings/{id}/return(id=${borrowing.id})}"
+                   class="btn btn-success btn-sm ms-2">
+                    <i class="bi bi-arrow-return-left me-1"></i> Trả sách
+                </a>
+            </div>
+        </div>
+        <div class="card-body p-4">
+
+            <!-- Alert if overdue -->
+            <div th:if="${borrowing.status.name() == 'BORROWED' and borrowing.dueDate.isBefore(today)}"
+                 class="alert alert-warning d-flex align-items-center mb-4">
+                <i class="bi bi-exclamation-triangle-fill fs-4 me-3 text-danger"></i>
+                <div>
+                    <strong>Phiếu mượn này đã quá hạn trả!</strong>
+                    Hạn trả là <strong th:text="${#temporals.format(borrowing.dueDate, 'dd/MM/yyyy')}"></strong>.
+                    Khi trả sẽ áp dụng phí phạt 5.000 VNĐ / ngày trễ cho mỗi cuốn sách.
+                </div>
+            </div>
+
+            <!-- Header Info -->
+            <div class="row g-3 mb-4 p-3 bg-light rounded">
+                <div class="col-md-4">
+                    <div class="text-muted small">Người mượn:</div>
+                    <div class="fw-bold fs-6 text-dark" th:text="${borrowing.member.fullName}"></div>
+                    <div class="small text-muted" th:text="${borrowing.member.email}"></div>
+                    <div class="small text-muted" th:if="${borrowing.member.phone}" th:text="'SĐT: ' + ${borrowing.member.phone}"></div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-muted small">Thông tin ngày:</div>
+                    <div>Ngày mượn: <strong th:text="${#temporals.format(borrowing.borrowDate, 'dd/MM/yyyy')}"></strong></div>
+                    <div>Hạn trả: <strong class="text-danger" th:text="${#temporals.format(borrowing.dueDate, 'dd/MM/yyyy')}"></strong></div>
+                    <div th:if="${borrowing.returnedDate != null}">
+                        Ngày trả: <strong class="text-success" th:text="${#temporals.format(borrowing.returnedDate, 'dd/MM/yyyy')}"></strong>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-muted small">Trạng thái & Phạt:</div>
+                    <div>
+                        Trạng thái:
+                        <span th:if="${borrowing.status.name() == 'BORROWED'}" class="badge bg-warning text-dark">Đang mượn</span>
+                        <span th:if="${borrowing.status.name() == 'RETURNED'}" class="badge bg-success">Đã trả hoàn tất</span>
+                    </div>
+                    <div class="mt-1">
+                        Tổng tiền phạt: <strong class="text-danger fs-6" th:text="${#numbers.formatDecimal(borrowing.totalFine, 0, 'COMMA', 0, 'POINT')} + ' đ'"></strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Details Table -->
+            <h6 class="fw-bold mb-3"><i class="bi bi-list-check me-2"></i>Danh Sách Sách Trong Phiếu</h6>
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 50px;">#</th>
+                            <th style="width: 140px;">ISBN</th>
+                            <th>Tên Sách</th>
+                            <th>Tác Giả</th>
+                            <th style="width: 110px;" class="text-center">Số Lượng Mượn</th>
+                            <th style="width: 110px;" class="text-center">Đã Trả</th>
+                            <th style="width: 110px;" class="text-center">Còn Lại</th>
+                            <th style="width: 130px;" class="text-end">Tiền Phạt</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="detail, stat : ${borrowing.details}">
+                            <td class="text-center" th:text="${stat.count}"></td>
+                            <td><code class="text-dark" th:text="${detail.book.isbn}"></code></td>
+                            <td class="fw-semibold text-primary" th:text="${detail.book.title}"></td>
+                            <td th:text="${detail.book.author}"></td>
+                            <td class="text-center fw-bold" th:text="${detail.quantity}"></td>
+                            <td class="text-center text-success fw-bold" th:text="${detail.returnedQuantity}"></td>
+                            <td class="text-center fw-bold"
+                                th:classappend="${detail.remainingQuantity > 0 ? 'text-danger' : 'text-muted'}"
+                                th:text="${detail.remainingQuantity}">
+                            </td>
+                            <td class="text-end fw-bold text-danger" th:text="${#numbers.formatDecimal(detail.fineAmount, 0, 'COMMA', 0, 'POINT')} + ' đ'"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div th:if="${borrowing.status.name() == 'BORROWED'}" class="d-flex justify-content-end gap-2 mt-4">
+                <form th:action="@{/borrowings/{id}/return-all(id=${borrowing.id})}" method="post" onsubmit="return confirm('Bạn có chắc chắn muốn xác nhận trả TOÀN BỘ số sách còn lại trong phiếu này?');">
+                    <button type="submit" class="btn btn-outline-success">
+                        <i class="bi bi-check-all me-1"></i> Trả Nhanh Toàn Bộ Sách
+                    </button>
+                </form>
+                <a th:href="@{/borrowings/{id}/return(id=${borrowing.id})}" class="btn btn-primary px-4">
+                    <i class="bi bi-arrow-return-left me-1"></i> Tùy Chọn Trả Từng Cuốn
+                </a>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

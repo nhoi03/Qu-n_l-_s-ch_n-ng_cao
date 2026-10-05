@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Tạo Phiếu Mượn Sách')}"></head>
+<body>
+
+<nav th:replace="~{fragments/layout :: navbar('borrowings')}"></nav>
+<div th:replace="~{fragments/layout :: alerts}"></div>
+
+<div class="container main-container" style="max-width: 900px;">
+    <div class="card">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0 text-primary">
+                <i class="bi bi-file-earmark-plus me-2"></i>Tạo Phiếu Mượn Sách Mới
+            </h5>
+        </div>
+        <div class="card-body p-4">
+            <form th:action="@{/borrowings}" th:object="${borrowingForm}" method="post" id="borrowingForm">
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-7">
+                        <label for="memberId" class="form-label fw-semibold">Chọn Thành Viên <span class="text-danger">*</span></label>
+                        <select id="memberId"
+                                th:field="*{memberId}"
+                                class="form-select"
+                                th:classappend="${#fields.hasErrors('memberId')} ? 'is-invalid' : ''">
+                            <option value="">-- Chọn thành viên mượn sách --</option>
+                            <option th:each="m : ${members}"
+                                    th:value="${m.id}"
+                                    th:text="${m.fullName} + ' (' + ${m.email} + ')'">
+                            </option>
+                        </select>
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('memberId')}" th:errors="*{memberId}"></div>
+                    </div>
+
+                    <div class="col-md-5">
+                        <label for="borrowDate" class="form-label fw-semibold">Ngày Mượn <span class="text-danger">*</span></label>
+                        <input type="date"
+                               id="borrowDate"
+                               th:field="*{borrowDate}"
+                               class="form-control"
+                               th:classappend="${#fields.hasErrors('borrowDate')} ? 'is-invalid' : ''">
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('borrowDate')}" th:errors="*{borrowDate}"></div>
+                        <small class="text-muted">Hạn trả mặc định: <strong>14 ngày</strong> kể từ ngày mượn.</small>
+                    </div>
+                </div>
+
+                <!-- Book items -->
+                <div class="card mb-4 bg-light border-0">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="card-title fw-bold text-dark mb-0">
+                                <i class="bi bi-journals me-2"></i>Danh Sách Sách Mượn
+                            </h6>
+                            <button type="button" class="btn btn-sm btn-outline-primary" id="addBookBtn">
+                                <i class="bi bi-plus-circle me-1"></i>Thêm dòng sách
+                            </button>
+                        </div>
+
+                        <div id="itemsContainer">
+                            <div th:each="item, itemStat : *{items}" class="row g-2 align-items-center mb-3 item-row border-bottom pb-3">
+                                <div class="col-md-8">
+                                    <label class="form-label small fw-semibold">Sách</label>
+                                    <select th:field="*{items[__${itemStat.index}__].bookId}" class="form-select book-select" required>
+                                        <option value="">-- Chọn sách --</option>
+                                        <option th:each="b : ${books}"
+                                                th:value="${b.id}"
+                                                th:data-available="${b.availableQuantity}"
+                                                th:text="${b.title} + ' - ' + ${b.author} + ' (Còn ' + ${b.availableQuantity} + ' cuốn)'">
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small fw-semibold">Số lượng</label>
+                                    <input type="number"
+                                           th:field="*{items[__${itemStat.index}__].quantity}"
+                                           class="form-control quantity-input"
+                                           min="1"
+                                           required>
+                                </div>
+                                <div class="col-md-1 text-center">
+                                    <label class="form-label small d-block">&nbsp;</label>
+                                    <button type="button" class="btn btn-outline-danger btn-sm remove-item-btn" title="Xóa dòng này">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="text-danger small mt-2" th:if="${#fields.hasErrors('items')}" th:errors="*{items}"></div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a th:href="@{/borrowings}" class="btn btn-outline-secondary">Hủy bỏ</a>
+                    <button type="submit" class="btn btn-primary px-4">
+                        <i class="bi bi-check2-circle me-1"></i> Xác nhận tạo phiếu
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+
+<!-- Script to dynamic add/remove book rows -->
+<script th:inline="javascript">
+    document.addEventListener("DOMContentLoaded", function () {
+        const container = document.getElementById("itemsContainer");
+        const addBtn = document.getElementById("addBookBtn");
+
+        function updateIndices() {
+            const rows = container.querySelectorAll(".item-row");
+            rows.forEach((row, index) => {
+                const bookSelect = row.querySelector(".book-select");
+                const qtyInput = row.querySelector(".quantity-input");
+                if (bookSelect) bookSelect.name = `items[${index}].bookId`;
+                if (qtyInput) qtyInput.name = `items[${index}].quantity`;
+            });
+        }
+
+        addBtn.addEventListener("click", function () {
+            const rows = container.querySelectorAll(".item-row");
+            const newIndex = rows.length;
+            const firstRow = rows[0];
+            const newRow = firstRow.cloneNode(true);
+
+            const select = newRow.querySelector(".book-select");
+            select.name = `items[${newIndex}].bookId`;
+            select.value = "";
+
+            const input = newRow.querySelector(".quantity-input");
+            input.name = `items[${newIndex}].quantity`;
+            input.value = 1;
+
+            container.appendChild(newRow);
+            attachRemoveEvent(newRow.querySelector(".remove-item-btn"));
+        });
+
+        function attachRemoveEvent(btn) {
+            btn.addEventListener("click", function () {
+                const rows = container.querySelectorAll(".item-row");
+                if (rows.length > 1) {
+                    btn.closest(".item-row").remove();
+                    updateIndices();
+                } else {
+                    alert("Phiếu mượn phải có ít nhất 1 dòng sách.");
+                }
+            });
+        }
+
+        container.querySelectorAll(".remove-item-btn").forEach(attachRemoveEvent);
+    });
+</script>
+
+</body>
+</html>

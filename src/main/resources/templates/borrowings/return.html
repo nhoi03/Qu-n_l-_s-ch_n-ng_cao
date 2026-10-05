@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Trả Sách - Phiếu #' + ${returnForm.borrowingId})}"></head>
+<body>
+
+<nav th:replace="~{fragments/layout :: navbar('borrowings')}"></nav>
+<div th:replace="~{fragments/layout :: alerts}"></div>
+
+<div class="container main-container" style="max-width: 900px;">
+    <div class="card mb-4">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0 text-primary">
+                <i class="bi bi-arrow-return-left me-2"></i>Trả Sách - Phiếu Mượn #<span th:text="${returnForm.borrowingId}"></span>
+            </h5>
+        </div>
+        <div class="card-body p-4">
+
+            <!-- Summary header -->
+            <div class="row g-3 mb-4 p-3 bg-light rounded">
+                <div class="col-md-4">
+                    <div class="text-muted small">Người mượn:</div>
+                    <div class="fw-bold text-dark" th:text="${returnForm.memberFullName}"></div>
+                    <div class="small text-muted" th:text="${returnForm.memberEmail}"></div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-muted small">Thời gian mượn:</div>
+                    <div>Ngày mượn: <strong th:text="${#temporals.format(returnForm.borrowDate, 'dd/MM/yyyy')}"></strong></div>
+                    <div>Hạn trả: <strong class="text-danger" th:text="${#temporals.format(returnForm.dueDate, 'dd/MM/yyyy')}"></strong></div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-muted small">Quy định phạt:</div>
+                    <div class="small text-muted">Nếu trả sau hạn: <strong>5.000 VNĐ / ngày / cuốn</strong></div>
+                </div>
+            </div>
+
+            <form th:action="@{/borrowings/{id}/return(id=${returnForm.borrowingId})}"
+                  th:object="${returnForm}"
+                  method="post">
+
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <label for="returnDate" class="form-label fw-semibold">Ngày Trả Thực Tế <span class="text-danger">*</span></label>
+                        <input type="date"
+                               id="returnDate"
+                               th:field="*{returnDate}"
+                               class="form-control"
+                               required>
+                    </div>
+                </div>
+
+                <h6 class="fw-bold mb-3"><i class="bi bi-journal-check me-2"></i>Chọn Số Lượng Trả Cho Từng Cuốn Sách</h6>
+                <div class="table-responsive mb-4">
+                    <table class="table table-bordered align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Tên Sách</th>
+                                <th style="width: 130px;" class="text-center">Đã Mượn</th>
+                                <th style="width: 130px;" class="text-center">Đã Trả Trước</th>
+                                <th style="width: 130px;" class="text-center">Còn Lại</th>
+                                <th style="width: 160px;" class="text-center">SL Trả Lần Này</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="item, itemStat : *{items}">
+                                <td>
+                                    <input type="hidden" th:field="*{items[__${itemStat.index}__].detailId}" />
+                                    <input type="hidden" th:field="*{items[__${itemStat.index}__].bookId}" />
+                                    <input type="hidden" th:field="*{items[__${itemStat.index}__].bookTitle}" />
+                                    <input type="hidden" th:field="*{items[__${itemStat.index}__].bookIsbn}" />
+                                    <input type="hidden" th:field="*{items[__${itemStat.index}__].quantity}" />
+                                    <input type="hidden" th:field="*{items[__${itemStat.index}__].returnedQuantity}" />
+                                    <input type="hidden" th:field="*{items[__${itemStat.index}__].remainingQuantity}" />
+
+                                    <div class="fw-semibold text-primary" th:text="${item.bookTitle}"></div>
+                                    <small class="text-muted" th:text="'ISBN: ' + ${item.bookIsbn}"></small>
+                                </td>
+                                <td class="text-center fw-bold" th:text="${item.quantity}"></td>
+                                <td class="text-center text-success" th:text="${item.returnedQuantity}"></td>
+                                <td class="text-center fw-bold text-danger" th:text="${item.remainingQuantity}"></td>
+                                <td>
+                                    <input type="number"
+                                           th:field="*{items[__${itemStat.index}__].returnQuantity}"
+                                           class="form-control text-center"
+                                           min="0"
+                                           th:max="${item.remainingQuantity}"
+                                           th:disabled="${item.remainingQuantity == 0}">
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a th:href="@{/borrowings/{id}(id=${returnForm.borrowingId})}" class="btn btn-outline-secondary">Hủy bỏ</a>
+                    <button type="submit" class="btn btn-success px-4">
+                        <i class="bi bi-check-circle me-1"></i> Xác Nhận Trả Sách
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

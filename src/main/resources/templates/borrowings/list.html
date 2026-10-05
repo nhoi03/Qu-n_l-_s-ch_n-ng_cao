@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Quản Lý Phiếu Mượn')}"></head>
+<body>
+
+<nav th:replace="~{fragments/layout :: navbar('borrowings')}"></nav>
+<div th:replace="~{fragments/layout :: alerts}"></div>
+
+<div class="container main-container">
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="card-title mb-0"><i class="bi bi-arrow-left-right me-2"></i>Danh Sách Phiếu Mượn Sách</h4>
+                <a th:href="@{/borrowings/new}" class="btn btn-primary">
+                    <i class="bi bi-plus-lg me-1"></i>Tạo Phiếu Mượn Mới
+                </a>
+            </div>
+
+            <!-- Filter form -->
+            <form th:action="@{/borrowings}" method="get" class="row g-2 mb-3">
+                <div class="col-md-5">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" name="keyword" th:value="${keyword}" class="form-control" placeholder="Tìm theo tên thành viên, email, SĐT...">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select name="status" class="form-select">
+                        <option value="">-- Tất cả trạng thái --</option>
+                        <option th:each="st : ${statuses}"
+                                th:value="${st}"
+                                th:text="${st.name() == 'BORROWED' ? 'Đang mượn (BORROWED)' : 'Đã trả hoàn tất (RETURNED)'}"
+                                th:selected="${status != null and status == st}">
+                        </option>
+                    </select>
+                </div>
+                <div class="col-md-4 d-flex gap-2">
+                    <button type="submit" class="btn btn-secondary w-50"><i class="bi bi-funnel me-1"></i>Lọc</button>
+                    <a th:href="@{/borrowings}" class="btn btn-outline-secondary w-50">Đặt lại</a>
+                </div>
+            </form>
+
+            <!-- Table -->
+            <div class="table-responsive">
+                <table class="table table-hover align-middle table-bordered">
+                    <thead>
+                        <tr>
+                            <th style="width: 70px;">Mã</th>
+                            <th>Thành Viên</th>
+                            <th style="width: 120px;">Ngày Mượn</th>
+                            <th style="width: 120px;">Hạn Trả</th>
+                            <th style="width: 120px;">Ngày Trả</th>
+                            <th style="width: 130px;" class="text-center">Trạng Thái</th>
+                            <th style="width: 120px;" class="text-end">Tiền Phạt</th>
+                            <th style="width: 180px;" class="text-center">Thao Tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:if="${#lists.isEmpty(borrowings)}">
+                            <td colspan="8" class="text-center text-muted py-4">Không tìm thấy phiếu mượn nào.</td>
+                        </tr>
+                        <tr th:each="b : ${borrowings}"
+                            th:classappend="${b.status.name() == 'BORROWED' and b.dueDate.isBefore(today)} ? 'table-warning' : ''">
+                            <td class="fw-bold" th:text="'#' + ${b.id}"></td>
+                            <td>
+                                <div class="fw-semibold text-primary" th:text="${b.member.fullName}"></div>
+                                <small class="text-muted" th:text="${b.member.email}"></small>
+                            </td>
+                            <td th:text="${#temporals.format(b.borrowDate, 'dd/MM/yyyy')}"></td>
+                            <td>
+                                <span th:text="${#temporals.format(b.dueDate, 'dd/MM/yyyy')}"></span>
+                                <span th:if="${b.status.name() == 'BORROWED' and b.dueDate.isBefore(today)}"
+                                      class="badge bg-danger ms-1" title="Quá hạn trả">
+                                    Quá hạn
+                                </span>
+                            </td>
+                            <td>
+                                <span th:if="${b.returnedDate != null}" th:text="${#temporals.format(b.returnedDate, 'dd/MM/yyyy')}"></span>
+                                <span th:unless="${b.returnedDate != null}" class="text-muted">-</span>
+                            </td>
+                            <td class="text-center">
+                                <span th:if="${b.status.name() == 'BORROWED'}" class="badge bg-warning text-dark">
+                                    <i class="bi bi-clock-history me-1"></i>Đang mượn
+                                </span>
+                                <span th:if="${b.status.name() == 'RETURNED'}" class="badge bg-success">
+                                    <i class="bi bi-check-circle me-1"></i>Đã trả
+                                </span>
+                            </td>
+                            <td class="text-end fw-bold" th:text="${#numbers.formatDecimal(b.totalFine, 0, 'COMMA', 0, 'POINT')} + ' đ'"></td>
+                            <td class="text-center">
+                                <div class="btn-group btn-group-sm">
+                                    <a th:href="@{/borrowings/{id}(id=${b.id})}" class="btn btn-outline-primary" title="Chi tiết">
+                                        <i class="bi bi-eye"></i> Xem
+                                    </a>
+                                    <a th:if="${b.status.name() == 'BORROWED'}"
+                                       th:href="@{/borrowings/{id}/return(id=${b.id})}"
+                                       class="btn btn-outline-success" title="Trả sách">
+                                        <i class="bi bi-arrow-return-left"></i> Trả
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div th:replace="~{fragments/pagination :: pagination('/borrowings', ${totalPages}, ${currentPage}, ${size})}"></div>
+        </div>
+    </div>
+</div>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

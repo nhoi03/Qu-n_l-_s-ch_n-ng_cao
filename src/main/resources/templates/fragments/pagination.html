@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<div th:fragment="pagination(baseUrl, totalPages, currentPage, size)" th:if="${totalPages > 1}" class="d-flex justify-content-between align-items-center mt-3">
+    <div class="text-muted small">
+        Trang <span class="fw-bold" th:text="${currentPage + 1}"></span> / <span th:text="${totalPages}"></span>
+        (Tổng số: <span class="fw-bold" th:text="${totalElements}"></span> bản ghi)
+    </div>
+    <nav>
+        <ul class="pagination pagination-sm mb-0">
+            <li class="page-item" th:classappend="${currentPage == 0 ? 'disabled' : ''}">
+                <a class="page-link" th:href="@{${baseUrl}(page=${currentPage - 1}, size=${size}, keyword=${keyword}, categoryId=${categoryId}, status=${status}, active=${active}, sortBy=${sortBy}, sortDir=${sortDir})}">
+                    <i class="bi bi-chevron-left"></i> Trước
+                </a>
+            </li>
+
+            <li class="page-item"
+                th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
+                th:if="${i >= currentPage - 2 and i <= currentPage + 2}"
+                th:classappend="${i == currentPage ? 'active' : ''}">
+                <a class="page-link"
+                   th:href="@{${baseUrl}(page=${i}, size=${size}, keyword=${keyword}, categoryId=${categoryId}, status=${status}, active=${active}, sortBy=${sortBy}, sortDir=${sortDir})}"
+                   th:text="${i + 1}">1</a>
+            </li>
+
+            <li class="page-item" th:classappend="${currentPage + 1 >= totalPages ? 'disabled' : ''}">
+                <a class="page-link" th:href="@{${baseUrl}(page=${currentPage + 1}, size=${size}, keyword=${keyword}, categoryId=${categoryId}, status=${status}, active=${active}, sortBy=${sortBy}, sortDir=${sortDir})}">
+                    Sau <i class="bi bi-chevron-right"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</div>
+
+</body>
+</html>
